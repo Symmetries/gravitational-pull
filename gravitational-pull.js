@@ -189,7 +189,7 @@ GAME.update = function() {
     for (var i = 0; i < GAME.moons.length; i++) {
         GAME.moons[i].gravity(GAME.void, temp_moons);
     }
-    if (GAME.record < GAME.void.mass) GAME.record = GAME.void.mass;
+    if (GAME.record < GAME.void.mass / Math.pow(GAME.world_radius, 2)) GAME.record = GAME.void.mass / Math.pow(GAME.world_radius, 2);
     if (!GAME.check(GAME.moons, GAME.world_radius)) {
         localStorage.setItem('record', String(GAME.record));
         GAME.new_game();
@@ -227,7 +227,7 @@ GAME.draw_text = function() {
     GAME.ctx.fillStyle = "red";
     GAME.ctx.font = String(20) + "px Arial";
     GAME.ctx.fillText("Score: " + String(GAME.void.mass / Math.pow(GAME.world_radius, 2)), 0, 20);
-    var txt = "HighScore: " + String(GAME.record / Math.pow(GAME.world_radius, 2));
+    var txt = "HighScore: " + String(GAME.record);
     GAME.ctx.fillText(txt, 0, height-10);
 }
 
