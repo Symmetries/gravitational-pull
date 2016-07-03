@@ -202,9 +202,12 @@ GAME.update = function() {
     var temp_moons = GAME.moons.slice();
     for (var i = 0; i < GAME.moons.length; i++) {
         GAME.moons[i].gravity(GAME.planet, temp_moons);
-        GAME.moons[i].draw(GAME.ctx);
     }
-    if (!GAME.check(GAME.moons, width, height, GAME.radius)) GAME.new_game();
+    if (GAME.record < GAME.planet.mass) GAME.record = GAME.planet.mass;
+    if (!GAME.check(GAME.moons, width, height, GAME.radius)) {
+        localStorage.setItem('record', String(GAME.record));
+        GAME.new_game();
+    }
 }
 
 GAME.draw_moons = function() {
@@ -230,8 +233,9 @@ GAME.draw_background = function() {
 
 GAME.draw_text = function() {
     GAME.ctx.fillStyle = "black";
-    GAME.ctx.font = 20 + "px Arial";
-    GAME.ctx.fillText("Force: " + String(GAME.planet.mass) + "000 N", 0, 20);
+    GAME.ctx.font = String(20) + "px Arial";
+    GAME.ctx.fillText("Mass Emulated: " + String(GAME.planet.mass) + "000 kg", 0, 20);
+    GAME.ctx.fillText("HighScore: " + String(GAME.record) + "000 kg", 0, 2*20);
 }
 
 GAME.draw_frame = function() {
@@ -251,6 +255,8 @@ GAME.ctx = GAME.canvas.getContext('2d');
 document.addEventListener("mousemove", GAME.MouseMouveHandler);
 document.addEventListener("mousedown", GAME.MouseDownHandler);
 document.addEventListener("mouseup", GAME.MouseUpHandler);
+if (!localStorage.getItem('record')) localStorage.setItem('record', "0");
+GAME.record = Number(localStorage.getItem('record'));
 GAME.set_screen()
 GAME.new_game();
 window.requestAnimationFrame(GAME.draw_frame);
