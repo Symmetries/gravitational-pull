@@ -21,13 +21,13 @@ GAME.Void = function (radius, mass) {
     this.update = function(mousex, mousey, width, height, proportion) {
         this.x = (mousex - width/2) * proportion;
         this.y = (mousey - height/2) * proportion;
-        if (this.gravity) this.mass += 1000000000000;
+        if (this.gravity) this.mass += 100000000000;
         
     }
     
     this.draw = function(ctx, width, height, proportion) {
         for (var i = 0; i < this.radii.length; i++) {
-            this.radii[i] -= Math.floor(this.mass / 10000000000);
+            this.radii[i] -= Math.floor(this.mass / 1000000000);
             console.log(this.mass);
             if (this.radii[i] < 2 ) {
                 this.radii[i] = this.max_radius;
@@ -41,13 +41,13 @@ GAME.Void = function (radius, mass) {
     }
 }
 
-GAME.Moon = function(x, y, radius, mass, id) {
+GAME.Moon = function(x, y, vx, vy, radius, mass, id) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.mass = mass;
-    this.vx = 10000 * (Math.random()-0.5);
-    this.vy = 10000 * (Math.random()-0.5);
+    this.vx = vx;
+    this.vy = vy;
     this.id = id;
     this.color = "#888888";
     
@@ -105,6 +105,7 @@ GAME.Moon = function(x, y, radius, mass, id) {
 
         this.x += this.vx
         this.y += this.vy
+        console.log();
     }
     
     this.draw = function(ctx, width, height, proportion) {
@@ -148,13 +149,10 @@ GAME.new_game = function() {
     var height = window.innerHeight;
     GAME.moons = [];
     GAME.world_radius = 1000000;
-    for (var i = 0; i < 2; i++) {
-        var ok = false;
-        var r = Math.random() * GAME.world_radius;
-        var theta = Math.random() * 2 * Math.PI;
-        GAME.moons.push(new GAME.Moon(r * Math.cos(theta), r * Math.sin(theta), GAME.world_radius * (i + 1) / 32, (i + 1) * (i + 1) * GAME.world_radius * GAME.world_radius, i));
-    }
-    GAME.void = new GAME.Void(2 * GAME.world_radius, 100 * GAME.world_radius * GAME.world_radius);
+    GAME.moons.push(new GAME.Moon(0, 0, -GAME.world_radius * 0.004, 0, GAME.world_radius / 16, 1000 * GAME.world_radius * GAME.world_radius, 0));
+    GAME.moons.push(new GAME.Moon(0, -GAME.world_radius / 2, GAME.world_radius * 0.04, 0, GAME.world_radius / 32, 100 * GAME.world_radius * GAME.world_radius, 1));
+    GAME.void = new GAME.Void(2 * GAME.world_radius, 0);
+    GAME.score = 0;
     GAME.void.gravity = false;
 }
 
@@ -188,8 +186,10 @@ GAME.update = function() {
     var temp_moons = GAME.moons.slice();
     for (var i = 0; i < GAME.moons.length; i++) {
         GAME.moons[i].gravity(GAME.void, temp_moons);
+        console.log(GAME.moons[i].x);
     }
-    if (GAME.record < GAME.void.mass / Math.pow(GAME.world_radius, 2)) GAME.record = GAME.void.mass / Math.pow(GAME.world_radius, 2);
+    if (GAME.void.gravity) GAME.score++;
+    if (GAME.record < GAME.score) GAME.record = GAME.score;
     if (!GAME.check(GAME.moons, GAME.world_radius)) {
         localStorage.setItem('record', String(GAME.record));
         GAME.new_game();
@@ -225,10 +225,11 @@ GAME.draw_text = function() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     GAME.ctx.fillStyle = "red";
-    GAME.ctx.font = String(20) + "px Arial";
-    GAME.ctx.fillText("Score: " + String(GAME.void.mass / Math.pow(GAME.world_radius, 2)), 0, 20);
-    var txt = "HighScore: " + String(GAME.record);
-    GAME.ctx.fillText(txt, 0, height-10);
+    var px = Math.floor(GAME.screen_radius / 10)
+    GAME.ctx.font = String(px) + "px Arial";
+    GAME.ctx.fillText("Score: " + String(GAME.score), Math.floor(GAME.screen_radius / 50), px);
+    var txt = "Best: " + String(GAME.record);
+    GAME.ctx.fillText(txt, width - GAME.ctx.measureText(txt).width - Math.floor(GAME.screen_radius/50), px);
 }
 
 GAME.draw_frame = function() {
