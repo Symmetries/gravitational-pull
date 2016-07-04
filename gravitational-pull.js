@@ -173,7 +173,6 @@ GAME.TouchStartHandler = function(e) {
     var adj = GAME.mousex - width/2;
     var opp = GAME.mousey - height/2;
     if (Math.sqrt(adj * adj + opp * opp) < GAME.screen_radius) GAME.void.gravity = true;
-    console.log(e.touches);
 }
 
 GAME.TouchMoveHandler = function(e) {
@@ -185,13 +184,12 @@ GAME.TouchMoveHandler = function(e) {
     var adj = GAME.mousex - width/2;
     var opp = GAME.mousey - height/2;
     if (Math.sqrt(adj * adj + opp * opp) > GAME.screen_radius) GAME.void.gravity = false;
-    
 }
 
 
 GAME.TouchEndHandler = function(e) {
     e.preventDefault();
-    GAME.void.gravity = false;
+    if (e.touches.length === 0) GAME.void.gravity = false;
 }
 /*
  * GAME METHODS
