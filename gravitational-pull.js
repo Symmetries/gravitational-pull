@@ -30,7 +30,9 @@ GAME.Void = function (radius, mass) {
             this.radii[i] -= Math.floor(this.mass / 5000000000);
             console.log(this.mass);
             if (this.radii[i] < 2 ) {
-                this.radii[i] = this.max_radius;
+                for (var j = 0; j < this.radii.length; j++) {
+                    this.radii[j] = this.max_radius * (1 - j/10);
+                }
             }
             ctx.beginPath();
             ctx.strokeStyle = this.color;
