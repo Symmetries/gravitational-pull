@@ -27,7 +27,7 @@ GAME.Void = function (radius, mass) {
     
     this.draw = function(ctx, width, height, proportion) {
         for (var i = 0; i < this.radii.length; i++) {
-            this.radii[i] -= Math.floor(this.mass / 1000000000);
+            this.radii[i] -= Math.floor(this.mass / 2000000000);
             console.log(this.mass);
             if (this.radii[i] < 2 ) {
                 this.radii[i] = this.max_radius;
