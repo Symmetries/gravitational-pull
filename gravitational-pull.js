@@ -1,16 +1,17 @@
 var GAME = GAME || {};
 
 /*
- * Game classes
+ * GAME CLASSES
  */
 
 GAME.Void = function (radius, mass) {
-    this.radius = radius;
-    this.radii = [];
-    for (var i = radius; i > 2; i -= radius/10) {
-        this.radii.push(i);
-    }
+    //class of the "mysterious gravitational force"
     this.max_radius = radius
+    this.radii = [];
+    var length = 10;
+    for (var i = 0; i < length; i++) {
+        this.radii.push(((i + 1) * this.max_radius) / length);
+    }
     this.mass = mass;
     this.color = "white";
     this.x = 0;
@@ -25,25 +26,41 @@ GAME.Void = function (radius, mass) {
         
     }
     
-    this.draw = function(ctx, width, height, proportion) {
-        for (var i = 0; i < this.radii.length; i++) {
-            this.radii[i] -= Math.floor(this.mass / 5000000000);
-            console.log(this.mass);
-            if (this.radii[i] < 2 ) {
-                for (var j = 0; j < this.radii.length; j++) {
-                    this.radii[j] = this.max_radius * (1 - j/10);
+    this.draw = function(ctx, width, height, proportion, line_length) {
+        //draw rings
+        if (this.gravity) {
+            for (var i = 0; i < this.radii.length; i++) {
+                this.radii[i] -= Math.floor(this.mass / 5000000000);
+                if (this.radii[i] < 2 ) {
+                    for (var j = 0; j < this.radii.length; j++) {
+                        this.radii[j] = ((j + 1) * this.max_radius) / this.radii.length;
+                    }
                 }
+                ctx.beginPath();
+                ctx.strokeStyle = this.color;
+                ctx.arc(width/2 + this.x * proportion, height/2 + this.y * proportion, this.radii[i] * proportion, 0, 2*Math.PI);
+                ctx.stroke();
             }
-            ctx.beginPath();
-            ctx.strokeStyle = this.color;
-            ctx.arc(width/2 + this.x * proportion, height/2 + this.y * proportion, this.radii[i] * proportion,0,2*Math.PI);
-            ctx.stroke();
         }
         
+        //draw reticle
+        ctx.strokeStyle = "red";
+        
+        ctx.beginPath();
+        ctx.moveTo(width/2 + this.x * proportion - line_length, height/2 + this.y * proportion);
+        ctx.lineTo(width/2 + this.x * proportion + line_length, height/2 + this.y * proportion);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(width/2 + this.x * proportion, height/2 + this.y * proportion - line_length);
+        ctx.lineTo(width/2 + this.x * proportion, height/2 + this.y * proportion + line_length);
+        ctx.stroke();
     }
 }
 
+
 GAME.Moon = function(x, y, vx, vy, radius, mass, id) {
+    //class of the bodies
     this.x = x;
     this.y = y;
     this.radius = radius;
@@ -87,8 +104,6 @@ GAME.Moon = function(x, y, vx, vy, radius, mass, id) {
                 //collison code goes here
                 var res = [this.vx - other.vx, this.vy - other.vy];
                 if (res[0] *(other.x - this.x) + res[1] * (other.y - this.y) >= 0 ) {
-                    //this.color = 'rgb(' + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ")"
-                    //other.color = 'rgb(' + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ", " + String(Math.floor(Math.random() * 256)) + ")"
                     var m1 = this.mass
                     var m2 = other.mass
                     var theta = -Math.atan2(other.y - this.y, other.x - this.x);
@@ -107,7 +122,6 @@ GAME.Moon = function(x, y, vx, vy, radius, mass, id) {
 
         this.x += this.vx
         this.y += this.vy
-        console.log();
     }
     
     this.draw = function(ctx, width, height, proportion) {
@@ -120,35 +134,98 @@ GAME.Moon = function(x, y, vx, vy, radius, mass, id) {
 }
 
 /*
- * Game procedures (or methods) 
+ * GAME EVENT HANDLERS
  */
 
-
-GAME.MouseMouveHandler = function(e) {
-    GAME.mousex = e.clientX;
-    GAME.mousey = e.clientY;
-    var width = window.innerWidth;
-    var height = window.innerHeight;
-    var adj = GAME.mousex - width/2;
-    var opp = GAME.mousey - height/2;
-    if (Math.sqrt(adj * adj + opp * opp) > GAME.screen_radius) GAME.void.gravity = false;
-}
-
+//mouse events
 GAME.MouseDownHandler = function(e) {
     var width = window.innerWidth;
     var height = window.innerHeight;
+    GAME.mousex = e.clientX;
+    GAME.mousey = e.clientY;
     var adj = GAME.mousex - width/2;
     var opp = GAME.mousey - height/2;
     if (Math.sqrt(adj * adj + opp * opp) < GAME.screen_radius) GAME.void.gravity = true;
 }
 
+GAME.MouseMouveHandler = function(e) {
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    GAME.mousex = e.clientX;
+    GAME.mousey = e.clientY;
+    var adj = GAME.mousex - width/2;
+    var opp = GAME.mousey - height/2;
+    if (Math.sqrt(adj * adj + opp * opp) > GAME.screen_radius) GAME.void.gravity = false;
+}
+
+
 GAME.MouseUpHandler = function(e) {
     GAME.void.gravity = false;
 }
 
-GAME.new_game = function() {
+//touch events
+GAME.TouchStartHandler = function(e) {
     var width = window.innerWidth;
     var height = window.innerHeight;
+    e.preventDefault();
+    GAME.mousex = e.touches[0].clientX;
+    GAME.mousey = e.touches[0].clientY;
+    var adj = GAME.mousex - width/2;
+    var opp = GAME.mousey - height/2;
+    if (Math.sqrt(adj * adj + opp * opp) < GAME.screen_radius) GAME.void.gravity = true;
+    console.log(e.touches);
+}
+
+GAME.TouchMoveHandler = function(e) {
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    e.preventDefault();
+    GAME.mousex = e.touches[0].clientX;
+    GAME.mousey = e.touches[0].clientY;
+    var adj = GAME.mousex - width/2;
+    var opp = GAME.mousey - height/2;
+    if (Math.sqrt(adj * adj + opp * opp) > GAME.screen_radius) GAME.void.gravity = false;
+    
+}
+
+
+GAME.TouchEndHandler = function(e) {
+    e.preventDefault();
+    GAME.void.gravity = false;
+}
+/*
+ * GAME METHODS
+ */
+
+GAME.setup = function() {
+    //called once at the beggining, sets up the game
+    GAME.canvas = document.getElementById('myCanvas');
+    GAME.ctx = GAME.canvas.getContext('2d');
+    
+    document.addEventListener("mousedown", GAME.MouseDownHandler);
+    document.addEventListener("mousemove", GAME.MouseMouveHandler);
+    document.addEventListener("mouseup", GAME.MouseUpHandler);
+    
+    document.addEventListener("touchstart", GAME.TouchStartHandler, false);
+    document.addEventListener("touchmove", GAME.TouchMoveHandler, false);
+    document.addEventListener("touchend", GAME.TouchEndHandler, false);
+    
+    //document.addEventListener("touchcancel", handleCancel, false);
+    
+    if (!localStorage.getItem('record')) localStorage.setItem('record', "0");
+    GAME.record = Number(localStorage.getItem('record'));
+    GAME.set_screen();
+    GAME.new_game();
+}
+
+
+GAME.start = function() {
+    //starts the game loop by requesting a new frame at 60 fps or lower, depending on the hardware
+    window.requestAnimationFrame(GAME.draw_frame);
+}
+
+
+GAME.new_game = function() {
     GAME.moons = [];
     GAME.world_radius = 1000000;
     GAME.moons.push(new GAME.Moon(0, 0, -GAME.world_radius * 0.004, 0, GAME.world_radius / 16, 1000 * GAME.world_radius * GAME.world_radius, 0));
@@ -158,9 +235,9 @@ GAME.new_game = function() {
     GAME.void.gravity = false;
 }
 
-GAME.set_screen = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
+
+GAME.set_screen = function(width, height) {
+    //sets the dimensions of the canvas and the radius of the game circle
     GAME.ctx.canvas.width  = width;
     GAME.ctx.canvas.height = height;
     GAME.ctx.clearRect(0, 0, width, height);
@@ -168,19 +245,8 @@ GAME.set_screen = function() {
 }
 
 
-GAME.check = function(moons, radius) {
-    var res = true;
-    for (var i = 0; i < moons.length; i++ ) {
-        var adj = moons[i].x;
-        var opp = moons[i].y;
-        if (Math.sqrt(adj * adj + opp * opp) + moons[i].radius > radius) res = false;
-    }
-    return res;
-}
-
-GAME.update = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
+GAME.update = function(width, height) {
+    //updates the game (moves planets, sets score, etc)
     GAME.void.update(GAME.mousex, GAME.mousey, width, height, GAME.world_radius / GAME.screen_radius);
     for (var i = 0; i < GAME.moons.length; i++) {
         GAME.moons[i].movement(GAME.moons, window.innerWidth, window.innerHeight);
@@ -188,7 +254,6 @@ GAME.update = function() {
     var temp_moons = GAME.moons.slice();
     for (var i = 0; i < GAME.moons.length; i++) {
         GAME.moons[i].gravity(GAME.void, temp_moons);
-        console.log(GAME.moons[i].x);
     }
     if (GAME.void.gravity) GAME.score++;
     if (GAME.record < GAME.score) GAME.record = GAME.score;
@@ -198,23 +263,21 @@ GAME.update = function() {
     }
 }
 
-GAME.draw_moons = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
-    for (var i = 0; i < GAME.moons.length; i++) {
-        GAME.moons[i].draw(GAME.ctx, width, height, GAME.screen_radius / GAME.world_radius);
+
+GAME.check = function(moons, radius) {
+    //returns whether or not a moon is outside of a circle defined by a radius
+    var res = true;
+    for (var i = 0; i < moons.length; i++ ) {
+        var adj = moons[i].x;
+        var opp = moons[i].y;
+        if (Math.sqrt(adj * adj + opp * opp) + moons[i].radius > radius) res = false;
     }
+    return res;
 }
 
-GAME.draw_planet = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
-    GAME.void.draw(GAME.ctx, width, height, GAME.screen_radius / GAME.world_radius);
-}
 
-GAME.draw_background = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
+GAME.draw_background = function(width, height) {
+    //draws the background
     var ctx = GAME.ctx;
     ctx.beginPath();
     ctx.arc(width/2,height/2,GAME.screen_radius,0,2*Math.PI);
@@ -223,9 +286,23 @@ GAME.draw_background = function() {
     ctx.stroke();
 }
 
-GAME.draw_text = function() {
-    var width = window.innerWidth;
-    var height = window.innerHeight;
+
+GAME.draw_moons = function(width, height) {
+    // draws the moons
+    for (var i = 0; i < GAME.moons.length; i++) {
+        GAME.moons[i].draw(GAME.ctx, width, height, GAME.screen_radius / GAME.world_radius);
+    }
+}
+
+
+GAME.draw_void = function(width, height) {
+    //draws the planet
+    GAME.void.draw(GAME.ctx, width, height, GAME.screen_radius / GAME.world_radius, GAME.screen_radius/16);
+}
+
+
+GAME.draw_text = function(width, height) {
+    //draws the score and best score texts
     GAME.ctx.fillStyle = "red";
     var px = Math.floor(GAME.screen_radius / 10)
     GAME.ctx.font = String(px) + "px Arial";
@@ -234,25 +311,28 @@ GAME.draw_text = function() {
     GAME.ctx.fillText(txt, width - GAME.ctx.measureText(txt).width - Math.floor(GAME.screen_radius/50), px);
 }
 
+
 GAME.draw_frame = function() {
-    GAME.set_screen();
-    if (GAME.mousex != undefined) {
-        GAME.update();
-        GAME.draw_background();
-        GAME.draw_moons();
-        if (GAME.void.gravity) GAME.draw_planet();
-        GAME.draw_text();
+    //updates game and draws on the screen
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    GAME.set_screen(width, height);
+    
+    //if the position of the mouse is undefined, set it to (0, 0)
+    if (GAME.mousex == undefined) {
+        GAME.mousex = 0;
+        GAME.mousey = 0;
     }
+    
+    GAME.update(width, height);
+    GAME.draw_background(width, height);
+    GAME.draw_moons(width, height);
+    GAME.draw_void(width, height);
+    GAME.draw_text(width, height);
+    
+    //request next frame
     window.requestAnimationFrame(GAME.draw_frame);
 }
 
-GAME.canvas = document.getElementById('myCanvas');
-GAME.ctx = GAME.canvas.getContext('2d');
-document.addEventListener("mousemove", GAME.MouseMouveHandler);
-document.addEventListener("mousedown", GAME.MouseDownHandler);
-document.addEventListener("mouseup", GAME.MouseUpHandler);
-if (!localStorage.getItem('record')) localStorage.setItem('record', "0");
-GAME.record = Number(localStorage.getItem('record'));
-GAME.set_screen();
-GAME.new_game();
-window.requestAnimationFrame(GAME.draw_frame);
+GAME.setup();
+GAME.start();
